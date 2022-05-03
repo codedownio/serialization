@@ -37,9 +37,9 @@ Tests are executed on an Intel Xeon W3520 @ 2.67GHz. On a slower machine, de(ser
 
 [Full Results](report.md)
 
-* [Criterion Results](https://rawgit.com/haskell-perf/serialization/master/report.html)
+* [Criterion Results](https://rawgit.com/codedownio/serialization/master/report.html)
 
-* [Criterion Results in JSON Format](https://raw.githubusercontent.com/haskell-perf/serialization/master/report.json)
+* [Criterion Results in JSON Format](https://raw.githubusercontent.com/codedownio/serialization/master/report.json)
 
 ## Tested Libraries
 
