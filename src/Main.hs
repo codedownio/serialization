@@ -15,10 +15,10 @@ module Main where
 import           Codec.Serialise      as CBOR
 import           Control.DeepSeq
 import           Criterion.Types
+import qualified Data.Aeson           as A
 import qualified Data.Binary          as B
 import qualified Data.ByteString      as BS
 import qualified Data.ByteString.Lazy as LBS
-import qualified Data.Flat            as F
 import           Data.List
 import qualified Data.Persist         as R
 import qualified Data.Serialize       as C
@@ -27,8 +27,8 @@ import qualified Data.Text            as T
 import qualified Data.Text.Encoding   as T
 import           Data.Typeable
 import           Dataset
+import qualified Flat                 as F
 import           GHC.Generics
-import qualified GHC.Packing          as P
 import           Report
 import           System.Mem           (performMajorGC)
 
@@ -54,6 +54,9 @@ instance {-# OVERLAPPABLE #-} B.Binary a => B.Binary (BinTree a)
 instance {-# OVERLAPPABLE #-} C.Serialize a => C.Serialize (BinTree a)
 
 instance {-# OVERLAPPABLE #-} R.Persist a => R.Persist (BinTree a)
+
+instance {-# OVERLAPPABLE #-} A.FromJSON a => A.FromJSON (BinTree a)
+instance {-# OVERLAPPABLE #-} A.ToJSON a => A.ToJSON (BinTree a)
 
 instance {-# OVERLAPPABLE #-} CBOR.Serialise a =>
                               CBOR.Serialise (BinTree a)
@@ -107,6 +110,8 @@ data Direction
            , S.Store
            , R.Persist
            , F.Flat
+           , A.ToJSON
+           , A.FromJSON
            )
 
 instance Arbitrary Direction where
@@ -160,14 +165,14 @@ data PkgPersist =
 data PkgCereal =
   PkgCereal
 
-data PkgPackman =
-  PkgPackman
-
 data PkgCBOR =
   PkgCBOR
 
 data PkgFlat =
   PkgFlat
+
+data PkgAeson =
+  PkgAeson
 
 data PkgStore =
   PkgStore
@@ -197,14 +202,6 @@ instance (C.Serialize a, NFData a) => Serialize PkgCereal a where
   {-# NOINLINE deserialize #-}
   deserialize _ = either error (return . force) . C.decode
 
-instance (NFData a, Typeable a) => Serialize PkgPackman a where
-  {-# NOINLINE serialize #-}
-  serialize _ =
-    fmap (force . LBS.toStrict . B.encode) .
-    flip P.trySerializeWith (1000 * 2 ^ (20 :: Int))
-  {-# NOINLINE deserialize #-}
-  deserialize _ = fmap force . P.deserialize . B.decode . LBS.fromStrict
-
 instance (CBOR.Serialise a, NFData a) => Serialize PkgCBOR a where
   {-# NOINLINE serialize #-}
   serialize _ = return . force . LBS.toStrict . CBOR.serialise
@@ -223,6 +220,12 @@ instance (F.Flat a, NFData a) => Serialize PkgFlat a where
   {-# NOINLINE deserialize #-}
   deserialize _ = return . force . fromRight . F.unflat
 
+instance (A.ToJSON a, A.FromJSON a, NFData a) => Serialize PkgAeson a where
+  {-# NOINLINE serialize #-}
+  serialize _ = return . force . LBS.toStrict . A.encode
+  {-# NOINLINE deserialize #-}
+  deserialize _ = return . force . fromRight . A.eitherDecode . LBS.fromStrict
+
 instance (Show a, Read a, NFData a) => Serialize PkgShow a where
     {-# NOINLINE serialize #-}
     serialize _ = return . force .  T.encodeUtf8 . T.pack . show
@@ -237,6 +240,7 @@ pkgs ::
      , R.Persist a
      , S.Store a
      , F.Flat a
+     , A.FromJSON a, A.ToJSON a
      , B.Binary a
      , Show a
      , Read a
@@ -248,11 +252,11 @@ pkgs ::
 --   ]
 pkgs =
   [ ("flat", serialize PkgFlat, deserialize PkgFlat)
+  , ("aeson", serialize PkgAeson, deserialize PkgAeson)
   , ("store", serialize PkgStore, deserialize PkgStore)
   , ("binary", serialize PkgBinary, deserialize PkgBinary)
   , ("cereal", serialize PkgCereal, deserialize PkgCereal)
   , ("persist", serialize PkgPersist, deserialize PkgPersist)
-  , ("packman", serialize PkgPackman, deserialize PkgPackman)
   , ("serialise", serialize PkgCBOR, deserialize PkgCBOR)
   -- , ("show", serialize PkgShow, deserialize PkgShow)
   ]
@@ -294,7 +298,7 @@ runBench
   !directionList <-
     force . ("[Direction]", ) <$>
     mapM (\_ -> generate $ arbitrary :: IO Direction) [1 .. 100000 :: Int]
-  !carsDataset <- force . ("Cars", ) <$> carsData
+  -- !carsDataset <- force . ("Cars", ) <$> carsData
     -- !abaloneDataset <- force . ("Abalone dataset",) <$> abaloneData
   let !irisDataset = force ("Iris", irisData)
 
@@ -306,7 +310,7 @@ runBench
   let tests =
         benchs directionList ++
         benchs intTree ++
-        benchs directionTree ++ benchs carsDataset ++ benchs irisDataset
+        benchs directionTree ++ benchs irisDataset
   -- let tests = []
 
   defaultMainWith
@@ -320,7 +324,7 @@ runBench
   sizes directionList
   sizes directionTree
   sizes intTree
-  sizes carsDataset
+  -- sizes carsDataset
   sizes irisDataset
 
   addTransfers workDir
@@ -338,6 +342,7 @@ sizes ::
      , NFData t
      , B.Binary t
      , F.Flat t
+     , A.FromJSON t, A.ToJSON t
      , Serialise t
      , R.Persist t
      , C.Serialize t
@@ -359,6 +364,7 @@ benchs ::
      , NFData a
      , B.Binary a
      , F.Flat a
+     , A.ToJSON a, A.FromJSON a
      , Serialise a
      , R.Persist a
      , C.Serialize a
@@ -383,7 +389,6 @@ main :: IO ()
 main
     -- runQC Binary
     -- runQC Cereal
-    -- runQC Packman
     -- runQC CBOR
  = do
   runBench

@@ -1,10 +1,6 @@
 system-ghc: false
 
-# ghc 8.4.4
-resolver: lts-12.16
-
-# ghc 8.6.1
-#resolver: nightly-2018-10-03
+resolver: nightly-2022-02-07
 
 # Local packages, usually specified by relative directory name
 packages:
@@ -15,12 +11,5 @@ flags:
    serialise:
      newtime15: true
 
-extra-deps:
-- flat-0.3.4
-- persist-0.1
-- packman-0.5.0
-# - binary-0.8.5.1
-- cereal-0.5.7.0
-- store-0.5.0.1
-- serialise-0.2.1.0
-- datasets-0.2.1
+# extra-deps:
+# - packman-0.5.0@sha256:ea773d5f197f3b4c54d97e208de9bbf217e39af28eced7b863697f621521be38,6887

@@ -3,13 +3,14 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE StandaloneDeriving #-}
 module Dataset(carsData,irisData) where
-import           Control.DeepSeq
-import qualified Data.Binary                as B
 import Codec.Serialise as CBOR
-import qualified Data.Flat                  as F
+import           Control.DeepSeq
+import qualified Data.Aeson                 as A
+import qualified Data.Binary                as B
+import qualified Data.Persist               as R
 import qualified Data.Serialize             as C
-import qualified Data.Persist                as R
 import qualified Data.Store                 as S
+import qualified Flat                       as F
 import           Numeric.Datasets           (getDataset)
 -- import           Numeric.Datasets.Abalone   (abalone)
 import           Numeric.Datasets.Car
@@ -20,6 +21,8 @@ instance B.Binary RelScore
 instance C.Serialize RelScore
 instance CBOR.Serialise RelScore
 instance F.Flat RelScore
+deriving instance A.ToJSON RelScore
+deriving instance A.FromJSON RelScore
 instance S.Store RelScore
 instance R.Persist RelScore
 
@@ -28,6 +31,8 @@ instance B.Binary RelSize
 instance C.Serialize RelSize
 instance CBOR.Serialise RelSize
 instance F.Flat RelSize
+deriving instance A.ToJSON RelSize
+deriving instance A.FromJSON RelSize
 instance S.Store RelSize
 instance R.Persist RelSize
 
@@ -36,6 +41,8 @@ instance B.Binary Acceptability
 instance C.Serialize Acceptability
 instance CBOR.Serialise Acceptability
 instance F.Flat Acceptability
+deriving instance A.ToJSON Acceptability
+deriving instance A.FromJSON Acceptability
 instance S.Store Acceptability
 instance R.Persist Acceptability
 
@@ -44,6 +51,8 @@ instance B.Binary Count
 instance C.Serialize Count
 instance CBOR.Serialise Count
 instance F.Flat Count
+deriving instance A.ToJSON Count
+deriving instance A.FromJSON Count
 instance S.Store Count
 instance R.Persist Count
 
@@ -53,6 +62,8 @@ instance B.Binary Car
 instance C.Serialize Car
 instance CBOR.Serialise Car
 instance F.Flat Car
+deriving instance A.ToJSON Car
+deriving instance A.FromJSON Car
 instance S.Store Car
 instance R.Persist Car
 
@@ -62,6 +73,8 @@ instance B.Binary Iris
 instance C.Serialize Iris
 instance CBOR.Serialise Iris
 instance F.Flat Iris
+deriving instance A.ToJSON Iris
+deriving instance A.FromJSON Iris
 instance S.Store Iris
 instance R.Persist Iris
 
@@ -70,6 +83,8 @@ instance B.Binary IrisClass
 instance C.Serialize IrisClass
 instance CBOR.Serialise IrisClass
 instance F.Flat IrisClass
+deriving instance A.ToJSON IrisClass
+deriving instance A.FromJSON IrisClass
 instance S.Store IrisClass
 instance R.Persist IrisClass
 
